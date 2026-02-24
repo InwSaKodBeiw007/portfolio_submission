@@ -24,6 +24,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+
+        {/*importmap for non using a build tool USER  (Vite)*/}
+        <script type="importmap">{`
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.183.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.183.1/examples/jsm/"
+          }
+        }
+      `}</script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

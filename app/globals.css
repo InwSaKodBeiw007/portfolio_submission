@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+html {
+  font-family: var(--font-geist-sans);
+}
+
+code {
+  font-family: var(--font-geist-mono);
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
