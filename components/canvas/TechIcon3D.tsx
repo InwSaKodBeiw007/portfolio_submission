@@ -3,7 +3,7 @@
 import React, { useRef, useState, useMemo } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text, Float, useGLTF, Resize } from '@react-three/drei'
-import { Group, Vector3, PointLight, Color } from 'three'
+import { Group, Vector3 } from 'three'
 
 interface TechIcon3DProps {
   name: string
@@ -11,16 +11,15 @@ interface TechIcon3DProps {
   totalCount: number
   color: string
   isVisible: boolean
-  onHover: (name: string | null) => void
+  onHover: (pos: Vector3 | null, color: string | null) => void
   onThemeSwitch: (name: string) => void
 }
 
 export default function TechIcon3D({ name, index, totalCount, color, isVisible, onHover, onThemeSwitch }: TechIcon3DProps) {
   const groupRef = useRef<Group>(null)
-  const lightRef = useRef<PointLight>(null)
   const [hovered, setHovered] = useState(false)
   const hoverTimer = useRef<NodeJS.Timeout | null>(null)
-  const { camera } = useThree()
+  const { camera, size } = useThree()
 
   // Handle lowercase filename for python and URL encoding for special characters like #
   const modelPath = useMemo(() => {
@@ -43,14 +42,24 @@ export default function TechIcon3D({ name, index, totalCount, color, isVisible, 
       const time = state.clock.getElapsedTime() * 0.4
       const t = time + (index / totalCount) * Math.PI * 2
 
+      // Dynamic radius based on screen width
+      const radius = size.width < 768 ? 3.5 : 7
+
       // Single circle in XZ plane, tilted in Y
       // Peaks (up + front) at t=0
       // Dips (down + back) at t=PI
-      const x = Math.sin(t) * 7
-      const y = Math.cos(t) * 2 // Vertical peak at center crossing
-      const z = Math.cos(t) * 7 // Depth peak (front) at same time
+      const x = Math.sin(t) * radius
+      const y = Math.cos(t) * (radius * 0.3) // Vertical oscillation proportional to radius
+      const z = Math.cos(t) * radius // Depth peak (front) at same time
 
       groupRef.current.position.set(x, y, z)
+      
+      // Update global light position if hovered
+      if (hovered) {
+        const worldPos = new Vector3()
+        groupRef.current.getWorldPosition(worldPos)
+        onHover(worldPos, color)
+      }
     }
 
     // Smooth scaling
@@ -66,16 +75,11 @@ export default function TechIcon3D({ name, index, totalCount, color, isVisible, 
     if (isVisible && hovered) {
       groupRef.current.rotation.y += delta * 3
     }
-
-    // Pulse light intensity
-    if (lightRef.current && hovered) {
-      lightRef.current.intensity = 10 + Math.sin(state.clock.elapsedTime * 10) * 5
-    }
   })
 
   const handlePointerEnter = () => {
+    if (size.width < 768) return // Disable hover effect on mobile to prevent double-tap issues
     setHovered(true)
-    onHover(name)
 
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
     hoverTimer.current = setTimeout(() => {
@@ -84,11 +88,21 @@ export default function TechIcon3D({ name, index, totalCount, color, isVisible, 
   }
 
   const handlePointerLeave = () => {
+    if (size.width < 768) return
     setHovered(false)
-    onHover(null)
+    onHover(null, null)
     if (hoverTimer.current) {
       clearTimeout(hoverTimer.current)
       hoverTimer.current = null
+    }
+  }
+
+  const handleClick = () => {
+    onThemeSwitch(name)
+    if (size.width < 768) {
+      // Provide immediate feedback on mobile
+      setHovered(true)
+      setTimeout(() => setHovered(false), 500)
     }
   }
 
@@ -98,7 +112,7 @@ export default function TechIcon3D({ name, index, totalCount, color, isVisible, 
         <group
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
-          onClick={() => onThemeSwitch(name)}
+          onClick={handleClick}
         >
           {/* Normalize the size of the model to a unit height */}
           <Resize height>
@@ -107,15 +121,6 @@ export default function TechIcon3D({ name, index, totalCount, color, isVisible, 
               rotation={name === 'GDScript' ? [0, Math.PI / -2, 0] : [0, 0, 0]}
             />
           </Resize>
-
-          {/* Hover Glow Light */}
-          <pointLight
-            ref={lightRef}
-            color={new Color(color)}
-            intensity={0}
-            distance={5}
-            decay={2}
-          />
 
           <Text
             position={

@@ -1,7 +1,8 @@
 'use client'
 
-import React, { forwardRef, useEffect } from 'react'
+import React, { forwardRef, useEffect, useMemo } from 'react'
 import { useGLTF, Center, useAnimations } from '@react-three/drei'
+import { useThree } from '@react-three/fiber'
 import { Group, LoopOnce } from 'three'
 
 /**
@@ -17,6 +18,12 @@ interface ModelGroupProps extends React.ComponentPropsWithoutRef<'group'> {
 export const Model = forwardRef<Group, ModelGroupProps>(({ isAnimating, ...props }, ref) => {
   const { scene, animations } = useGLTF('/snuff_with_european.glb')
   const { actions } = useAnimations(animations, scene)
+  const { size } = useThree()
+
+  const responsiveScale = useMemo(() => {
+    const isMobile = size.width < 768
+    return isMobile ? [50, 52, 48] : [95, 100, 90]
+  }, [size.width])
 
   useEffect(() => {
     if (isAnimating && actions && animations.length > 0) {
@@ -44,7 +51,7 @@ export const Model = forwardRef<Group, ModelGroupProps>(({ isAnimating, ...props
   return (
     <group ref={ref} {...props} dispose={null}>
       <Center top>
-        {scene && <primitive object={scene} scale={[95, 100, 90]} />}
+        {scene && <primitive object={scene} scale={responsiveScale} />}
       </Center>
     </group>
   )

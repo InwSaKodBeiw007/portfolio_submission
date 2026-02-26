@@ -15,10 +15,10 @@ interface AnimationProps {
 }
 
 export default function Animation({ modelRef, scrollRef, isTechStackVisible }: AnimationProps) {
-  const { camera } = useThree()
+  const { camera, size } = useThree()
   const tlCamera = useRef<gsap.core.Timeline | null>(null)
   const isTransitioning = useRef(false)
-  
+
   // Use useFrame for smooth lerping to target positions based on scroll
   const scrollProgress = useRef(0)
 
@@ -27,6 +27,7 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
     if (!modelRef.current || isTechStackVisible || isTransitioning.current) return
 
     const t = state.clock.getElapsedTime()
+    const isMobile = size.width < 768
 
     // 1. Idle "Breathing" (Sine wave without the large offset)
     const breathingX = Math.sin(t / 4) / 20
@@ -43,12 +44,12 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
       targetX = 0
       targetRx = 0
     } else if (p < 0.6) {
-      // Section 1 & 2: Left
-      targetX = -6.65
+      // Section 1 & 2: Left (Adjusted for Mobile)
+      targetX = isMobile ? -2.5 : -6.65
       targetRx = -Math.PI / 12 // Tilt up
     } else if (p < 0.9) {
-      // Section 3: Right
-      targetX = 6.5
+      // Section 3: Right (Adjusted for Mobile)
+      targetX = isMobile ? 2.5 : 6.5
       targetRx = -Math.PI / 12 // Tilt up
     } else {
       // Section 4: Center
@@ -64,7 +65,7 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
 
     // 4. Lock Z and Y (to prevent zoom/bounce)
     modelRef.current.position.z = 0.95
-    modelRef.current.position.y = 1
+    modelRef.current.position.y = isMobile ? 4.0 : 1
 
     // Apply Rotation X (Target + Breathing)
     modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, targetRx + breathingX, 0.05)
@@ -95,13 +96,15 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
     if (isTechStackVisible) {
       isTransitioning.current = true
       tlCamera.current = gsap.timeline({
-        onComplete: () => { 
-          isTransitioning.current = false 
+        onComplete: () => {
+          isTransitioning.current = false
         },
-        onReverseComplete: () => { 
-          isTransitioning.current = false 
+        onReverseComplete: () => {
+          isTransitioning.current = false
         }
       })
+
+      const isMobile = size.width < 768
 
       // Animate Camera to a 90-degree side view and zoom in
       tlCamera.current.to(camera.position, {
@@ -128,9 +131,9 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
         const finalY = currentY + diffY
 
         tlCamera.current.to(modelRef.current.position, {
-          x: 1,
-          y: -2, // Raised higher
-          z: -2,
+          x: isMobile ? 0.5 : 1,
+          y: isMobile ? 1.5 : -2, // Move even higher on mobile
+          z: isMobile ? -8.5 : -2, // Move backward on mobile (further from camera)
           duration: 1,
           ease: 'power3.inOut',
         }, 0)
@@ -148,7 +151,7 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
         tlCamera.current.reverse()
       }
     }
-  }, [isTechStackVisible, camera, modelRef])
+  }, [isTechStackVisible, camera, modelRef, size.width])
 
   return null
 }

@@ -7,6 +7,7 @@ import { Model } from './Model'
 import Animation from './Animation'
 import Ocean from './Ocean'
 import TechStack from '../ui/TechStack'
+import * as THREE from 'three'
 import { Group } from 'three'
 
 interface SceneProps {
@@ -28,16 +29,69 @@ const CameraConfig = () => {
   );
 };
 
-export default function Scene({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme }: SceneProps): React.ReactElement {
+const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme, techGlowLightRef, handleTechHover, handleTechClick }: any) => {
+  const { size } = useThree()
   const modelRef = useRef<Group>(null)
+  const isMobile = size.width < 768
+
+  return (
+    <>
+      <CameraConfig />
+      <Suspense fallback={<Html center><div className="text-white text-2xl font-bold animate-pulse">The artifact is loading...</div></Html>}>
+        <ambientLight intensity={isMobile ? 1 : 2} />
+        {!isMobile && (
+          <pointLight position={[-10, -10, -10]} intensity={1} color={currentTheme.lightColor} />
+        )}
+        <directionalLight position={[10, 10, 10]} intensity={isMobile ? 2 : 3} color={currentTheme.lightColor} />
+        <pointLight ref={techGlowLightRef} intensity={0} distance={10} decay={2} />
+        {!isMobile && <Environment preset="city" />}
+        <Ocean />
+        <PresentationControls
+          damping={0.1}
+          snap
+          rotation={[0, 0, 0]}
+          polar={[-Math.PI / 3, Math.PI / 3]}
+          azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
+        >
+          <Model ref={modelRef} isAnimating={isTechStackVisible} />
+        </PresentationControls>
+        {isTechStackVisible && (
+          <Suspense fallback={null}>
+            <TechStack 
+              isVisible={isTechStackVisible} 
+              onTechClick={handleTechClick} 
+              onTechHover={handleTechHover}
+            />
+          </Suspense>
+        )}
+      </Suspense>
+      <Animation modelRef={modelRef} scrollRef={scrollRef} isTechStackVisible={isTechStackVisible} />
+    </>
+  )
+}
+
+export default function Scene({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme }: SceneProps): React.ReactElement {
   const [mounted, setMounted] = useState(false)
+  const techGlowLightRef = useRef<THREE.PointLight>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0)
-    return () => clearTimeout(timer)
+    setMounted(true)
+  }, [])
+
+  const handleTechHover = useCallback((pos: THREE.Vector3 | null, color: string | null) => {
+    if (techGlowLightRef.current) {
+      if (pos && color) {
+        techGlowLightRef.current.position.copy(pos)
+        techGlowLightRef.current.color.set(color)
+        techGlowLightRef.current.intensity = 15
+      } else {
+        techGlowLightRef.current.intensity = 0
+      }
+    }
   }, [])
 
   const handleTechClick = useCallback((tech: string) => {
+    // ... Switch logic remains the same
     console.log(`My Master clicked on: ${tech}`)
     let newTheme = { ...currentTheme };
     switch (tech) {
@@ -84,29 +138,17 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
       eventSource={mounted ? document.body : undefined}
       eventPrefix="client"
     >
-      <CameraConfig />
-      <Suspense fallback={<Html center><div className="text-white text-2xl font-bold animate-pulse">The artifact is loading...</div></Html>}>
-        <ambientLight intensity={2} />
-        <pointLight position={[-10, -10, -10]} intensity={1} color={currentTheme.lightColor} />
-        <directionalLight position={[10, 10, 10]} intensity={3} color={currentTheme.lightColor} />
-        <Environment preset="city" />
-        <Ocean />
-        <PresentationControls
-          damping={0.1}
-          snap
-          rotation={[0, 0, 0]}
-          polar={[-Math.PI / 3, Math.PI / 3]}
-          azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
-        >
-          <Model ref={modelRef} isAnimating={isTechStackVisible} />
-        </PresentationControls>
-        {isTechStackVisible && (
-          <Suspense fallback={null}>
-            <TechStack isVisible={isTechStackVisible} onTechClick={handleTechClick} />
-          </Suspense>
-        )}
-      </Suspense>
-      <Animation modelRef={modelRef} scrollRef={scrollRef} isTechStackVisible={isTechStackVisible} />
+      {mounted && (
+        <SceneContent 
+          scrollRef={scrollRef}
+          isTechStackVisible={isTechStackVisible}
+          currentTheme={currentTheme}
+          setCurrentTheme={setCurrentTheme}
+          techGlowLightRef={techGlowLightRef}
+          handleTechHover={handleTechHover}
+          handleTechClick={handleTechClick}
+        />
+      )}
     </Canvas>
   )
 }

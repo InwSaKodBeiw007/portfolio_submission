@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useEffect, useMemo, useState, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { Group } from 'three'
+import React, { useEffect, useState, useRef } from 'react'
+import { Group, Vector3 } from 'three'
 import TechIcon3D from '../canvas/TechIcon3D'
 import { useGLTF } from '@react-three/drei'
 
 interface TechStackProps {
   isVisible: boolean;
   onTechClick: (tech: string) => void;
+  onTechHover: (pos: Vector3 | null, color: string | null) => void;
 }
 
 const technologies = [
@@ -36,7 +36,7 @@ const techColors: Record<string, string> = {
   'Roblox Studio': '#00A2FF'
 }
 
-export default function TechStack({ isVisible, onTechClick }: TechStackProps) {
+export default function TechStack({ isVisible, onTechClick, onTechHover }: TechStackProps) {
   const [delayedVisible, setDelayedVisible] = useState(false)
   const groupRef = useRef<Group>(null)
 
@@ -48,7 +48,11 @@ export default function TechStack({ isVisible, onTechClick }: TechStackProps) {
         setDelayedVisible(true)
       }, 2000) // Reduced delay for better responsiveness
     } else {
-      setDelayedVisible(false)
+      // Use a timeout of 0 to move it to the next event loop tick and avoid sync render warning
+      const clearTimer = setTimeout(() => {
+        setDelayedVisible(false)
+      }, 0)
+      return () => clearTimeout(clearTimer)
     }
     return () => {
       if (timer) clearTimeout(timer);
@@ -65,7 +69,7 @@ export default function TechStack({ isVisible, onTechClick }: TechStackProps) {
           totalCount={technologies.length}
           color={techColors[tech]}
           isVisible={delayedVisible}
-          onHover={() => {}} // Light logic handled inside TechIcon3D
+          onHover={onTechHover}
           onThemeSwitch={onTechClick}
         />
       ))}
