@@ -2,6 +2,8 @@
 
 html {
   font-family: var(--font-geist-sans);
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
 }
 
 code {
@@ -28,7 +30,10 @@ code {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: transparent;
+  color: white;
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  /* Ensure snap applies to body if html isn't enough */
+  scroll-snap-type: y mandatory;
 }

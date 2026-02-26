@@ -1,0 +1,11 @@
+Skill : Website --> HTML, CSS, JAVASCRIPT, React, Typescript, Python 
+JWT Web Token, LocalStorage, Cookies, Auth, Hash, DB
+Favorite Framework --> Nextjs (mostly my web project contain Nodejs)
+left Over:	https://github.com/InwSaKodBeiw007/Ecommerce-Website-Nextjs
+
+Machine Learning --> Python for train Model (train_test_split Master)
+left Over:	https://github.com/InwSaKodBeiw007/Kaggle-Titanic-MLPYTHON ,  https://github.com/InwSaKodBeiw007/rasterio_NOOBML
+
+More: Docker container, Docker compose  
+
+I'm LinuxOS user btw. (distro:	Ubuntu)

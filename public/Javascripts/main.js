@@ -11,7 +11,7 @@ document.body.appendChild(renderer.domElement);
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 
 //Texture Loader
-const texture_loader = new THREE.TextureLoader();
+// const texture_loader = new THREE.TextureLoader();
 // const texture = texture_loader.load("")
 // const displacement = texture_loader.load("")
 const material = new THREE.MeshBasicMaterial({
