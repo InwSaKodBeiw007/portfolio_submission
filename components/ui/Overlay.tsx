@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface OverlayProps {
   onViewTechStack: () => void;
@@ -10,88 +11,150 @@ interface OverlayProps {
 
 export default function Overlay({ onViewTechStack, onBack, isTechStackVisible }: OverlayProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      const offset = 80; // Account for fixed navbar
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
     setIsMenuOpen(false);
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-50">
-      {/* Top Header */}
-      <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center pointer-events-auto">
-        <div className="group cursor-pointer" onClick={() => scrollToSection('home')}>
-          <h1 className="text-2xl font-black text-white tracking-tighter hover:text-gray-300 transition-colors">
-            GAME&apos;S <span className="text-white/50">SITE</span>
-          </h1>
-        </div>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:block">
-          <ul className="flex space-x-8">
-            <li><button onClick={() => scrollToSection('home')} className="text-white/70 hover:text-white transition-colors text-sm uppercase tracking-widest font-medium">Home</button></li>
-            <li><button onClick={() => scrollToSection('projects')} className="text-white/70 hover:text-white transition-colors text-sm uppercase tracking-widest font-medium">Projects</button></li>
-            <li><button onClick={() => scrollToSection('contact')} className="text-white/70 hover:text-white transition-colors text-sm uppercase tracking-widest font-medium">Contact Me</button></li>
-          </ul>
-        </nav>
+  const navLinks = [
+    { name: 'Home', id: 'home' },
+    { name: 'Projects', id: 'projects' },
+    { name: 'About', id: 'about' },
+    { name: 'Skills', id: 'skills' },
+    { name: 'Contact', id: 'contact' },
+  ];
 
-        {/* Mobile Hamburger Button */}
-        <button 
-          onClick={toggleMenu}
-          className="md:hidden text-white p-2 z-50"
-          aria-label="Toggle Menu"
-        >
-          <div className="w-6 h-5 relative flex flex-col justify-between">
-            <span className={`w-full h-0.5 bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-            <span className={`w-full h-0.5 bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-            <span className={`w-full h-0.5 bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-          </div>
-        </button>
-      </div>
+  return (
+    <>
+      <header 
+        className={`fixed top-0 left-0 w-full z-[100] transition-all duration-300 ${
+          scrolled ? 'bg-background/80 bg-blur py-4' : 'bg-transparent py-6'
+        }`}
+      >
+        <div className="container mx-auto px-6 md:px-12 flex justify-between items-center">
+          <button 
+            onClick={() => scrollToSection('home')}
+            className="text-xl md:text-2xl font-bold tracking-tighter text-white hover:text-accent transition-colors"
+          >
+            GAME<span className="text-accent">.</span>
+          </button>
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden md:block">
+            <ul className="flex space-x-10">
+              {navLinks.map((link) => (
+                <li key={link.id}>
+                  <button 
+                    onClick={() => scrollToSection(link.id)} 
+                    className="relative text-sm font-medium tracking-wide text-foreground hover:text-white transition-colors group"
+                  >
+                    {link.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Mobile Hamburger Button */}
+          <button 
+            onClick={toggleMenu}
+            className="md:hidden text-white p-2 z-[110]"
+            aria-label="Toggle Menu"
+          >
+            <div className="w-6 h-5 relative flex flex-col justify-between">
+              <motion.span 
+                animate={isMenuOpen ? { rotate: 45, y: 9 } : { rotate: 0, y: 0 }}
+                className="w-full h-0.5 bg-white origin-left"
+              ></motion.span>
+              <motion.span 
+                animate={isMenuOpen ? { opacity: 0 } : { opacity: 1 }}
+                className="w-full h-0.5 bg-white"
+              ></motion.span>
+              <motion.span 
+                animate={isMenuOpen ? { rotate: -45, y: -9 } : { rotate: 0, y: 0 }}
+                className="w-full h-0.5 bg-white origin-left"
+              ></motion.span>
+            </div>
+          </button>
+        </div>
+      </header>
 
       {/* Mobile Menu Overlay */}
-      <div className={`fixed inset-0 bg-black/95 backdrop-blur-xl transition-all duration-500 pointer-events-auto md:hidden ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="flex flex-col items-center justify-center h-full space-y-8 text-center">
-          <button onClick={() => scrollToSection('home')} className="text-3xl font-bold text-white uppercase tracking-tighter">Home</button>
-          <button onClick={() => scrollToSection('projects')} className="text-3xl font-bold text-white uppercase tracking-tighter">Projects</button>
-          <button onClick={() => scrollToSection('contact')} className="text-3xl font-bold text-white uppercase tracking-tighter">Contact Me</button>
-          <div className="pt-8">
-            <button
-              onClick={() => { onViewTechStack(); setIsMenuOpen(false); }}
-              className="bg-white text-black px-8 py-3 rounded-full font-bold text-lg"
-            >
-              EXPLORE TECH STACK
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Action Button (Responsive) */}
-      <div className={`absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 md:left-1/2 md:-translate-x-1/2 pointer-events-auto transition-all duration-500 ${isMenuOpen ? 'opacity-0' : 'opacity-100'}`}>
-        {isTechStackVisible ? (
-          <button
-            onClick={onBack}
-            className="group relative flex items-center justify-center bg-white text-black px-8 py-3 md:px-10 md:py-4 rounded-full font-bold transition-all hover:scale-105 active:scale-95 shadow-2xl overflow-hidden"
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 bg-background/95 bg-blur z-[105] md:hidden flex flex-col items-center justify-center"
           >
-            <span className="relative z-10 flex items-center gap-2">
-              <span className="transition-transform group-hover:-translate-x-1">←</span> BACK
-            </span>
-            <div className="absolute inset-0 bg-red-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-          </button>
-        ) : (
+            <nav className="flex flex-col items-center space-y-10">
+              {navLinks.map((link) => (
+                <button 
+                  key={link.id}
+                  onClick={() => scrollToSection(link.id)} 
+                  className="text-3xl font-bold text-white hover:text-accent transition-colors tracking-tighter"
+                >
+                  {link.name}
+                </button>
+              ))}
+              <button
+                onClick={() => { onViewTechStack(); setIsMenuOpen(false); }}
+                className="mt-6 px-8 py-3 rounded-full border border-accent text-accent font-bold hover:bg-accent hover:text-white transition-all"
+              >
+                EXPLORE TECH STACK
+              </button>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tech Stack Button (Desktop) */}
+      {!isTechStackVisible && (
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-auto hidden md:block">
           <button
             onClick={onViewTechStack}
-            className="group relative hidden md:flex items-center justify-center bg-white/10 text-white px-8 py-3 md:px-10 md:py-4 rounded-full font-bold border border-white/20 backdrop-blur-xl transition-all hover:bg-white hover:text-black hover:scale-105 active:scale-95 shadow-2xl"
+            className="px-10 py-4 rounded-full bg-white/5 border border-white/10 text-white font-bold bg-blur hover:bg-white hover:text-black transition-all hover:scale-105 active:scale-95 shadow-2xl"
           >
             EXPLORE TECH STACK
           </button>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+
+      {isTechStackVisible && (
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+          <button
+            onClick={onBack}
+            className="px-10 py-4 rounded-full bg-accent text-white font-bold transition-all hover:scale-105 active:scale-95 shadow-2xl flex items-center gap-2"
+          >
+            <span>←</span> BACK
+          </button>
+        </div>
+      )}
+    </>
   )
 }

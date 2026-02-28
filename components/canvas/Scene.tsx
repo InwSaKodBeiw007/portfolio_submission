@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense, RefObject, useRef, useCallback, useState, useEffect } from 'react'
+import React, { Suspense, useRef, useCallback, useState, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Html, PresentationControls, PerspectiveCamera } from '@react-three/drei'
 import { Model } from './Model'
@@ -11,7 +11,6 @@ import * as THREE from 'three'
 import { Group } from 'three'
 
 interface SceneProps {
-  scrollRef: RefObject<HTMLDivElement | null>;
   isTechStackVisible: boolean;
   currentTheme: { background: string; lightColor: string };
   setCurrentTheme: React.Dispatch<React.SetStateAction<{ background: string; lightColor: string }>>;
@@ -29,7 +28,15 @@ const CameraConfig = () => {
   );
 };
 
-const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme, techGlowLightRef, handleTechHover, handleTechClick }: any) => {
+interface SceneContentProps {
+  isTechStackVisible: boolean;
+  currentTheme: { background: string; lightColor: string };
+  techGlowLightRef: React.RefObject<THREE.PointLight | null>;
+  handleTechHover: (pos: THREE.Vector3 | null, color: string | null) => void;
+  handleTechClick: (tech: string) => void;
+}
+
+const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, handleTechHover, handleTechClick }: SceneContentProps) => {
   const { size } = useThree()
   const modelRef = useRef<Group>(null)
   const isMobile = size.width < 768
@@ -65,16 +72,17 @@ const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentT
           </Suspense>
         )}
       </Suspense>
-      <Animation modelRef={modelRef} scrollRef={scrollRef} isTechStackVisible={isTechStackVisible} />
+      <Animation modelRef={modelRef} isTechStackVisible={isTechStackVisible} />
     </>
   )
 }
 
-export default function Scene({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme }: SceneProps): React.ReactElement {
+export default function Scene({ isTechStackVisible, currentTheme, setCurrentTheme }: SceneProps): React.ReactElement {
   const [mounted, setMounted] = useState(false)
   const techGlowLightRef = useRef<THREE.PointLight>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -91,7 +99,6 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
   }, [])
 
   const handleTechClick = useCallback((tech: string) => {
-    // ... Switch logic remains the same
     let newTheme = { ...currentTheme };
     switch (tech) {
       case 'TypeScript':
@@ -125,7 +132,7 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
         newTheme = { background: '#00A2FF', lightColor: '#FFFFFF' };
         break;
       default:
-        newTheme = { background: '#000000', lightColor: '#FFFFFF' };
+        newTheme = { background: '#050508', lightColor: '#FFFFFF' };
         break;
     }
     setCurrentTheme(newTheme);
@@ -134,15 +141,13 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
   return (
     <Canvas
       style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -1, background: currentTheme.background }}
-      eventSource={mounted ? document.body : undefined}
+      eventSource={mounted ? (typeof document !== 'undefined' ? document.body : undefined) : undefined}
       eventPrefix="client"
     >
       {mounted && (
         <SceneContent 
-          scrollRef={scrollRef}
           isTechStackVisible={isTechStackVisible}
           currentTheme={currentTheme}
-          setCurrentTheme={setCurrentTheme}
           techGlowLightRef={techGlowLightRef}
           handleTechHover={handleTechHover}
           handleTechClick={handleTechClick}
@@ -151,9 +156,3 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
     </Canvas>
   )
 }
-
-
-
-
-
-
