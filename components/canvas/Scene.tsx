@@ -92,7 +92,6 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
 
   const handleTechClick = useCallback((tech: string) => {
     // ... Switch logic remains the same
-    console.log(`My Master clicked on: ${tech}`)
     let newTheme = { ...currentTheme };
     switch (tech) {
       case 'TypeScript':

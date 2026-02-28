@@ -49,7 +49,7 @@ export default function Home() {
           {/* Hero Section */}
           <div id="home" className="relative h-[100vh] flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-20 lg:px-40 text-white snap-start snap-always text-center md:text-left gap-4 md:gap-0 pt-80 md:pt-0">
             <h1 className="text-4xl md:text-6xl lg:text-8xl font-bold tracking-tighter hover:text-gray-300 transition-colors cursor-default whitespace-nowrap mt-20 md:mt-0">
-              <ScrambleText text="Welcome to" autoStart delay={500} />
+              <ScrambleText text="Welcome to" autoStart delay={700} />
             </h1>
             <h2 className="text-xl md:text-4xl lg:text-6xl font-medium tracking-tight hover:text-gray-300 transition-colors cursor-default whitespace-nowrap">
               <ScrambleText text="my web portfolio" autoStart delay={1200} />

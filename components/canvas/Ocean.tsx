@@ -9,7 +9,7 @@ export default function Ocean() {
   const { scene, animations } = useGLTF('/Background-Infinite.glb')
   const { size } = useThree()
   const isMobile = size.width < 768
-  
+
   // Clone the scene and darken materials
   const clonedScene = useMemo(() => {
     const clone = scene.clone()
@@ -19,7 +19,7 @@ export default function Ocean() {
     clone.traverse((node: THREE.Object3D) => {
       if (node instanceof THREE.Mesh) {
         const oldMaterial = node.material as THREE.MeshStandardMaterial
-        
+
         if (isMobile) {
           // On mobile, switch to MeshBasicMaterial with NO extra features
           const newMaterial = new THREE.MeshBasicMaterial({
@@ -28,7 +28,7 @@ export default function Ocean() {
             transparent: oldMaterial.transparent,
             opacity: oldMaterial.opacity,
           })
-          
+
           // Clone and strip geometry to the absolute bare minimum
           const geom = node.geometry.clone()
           geom.deleteAttribute('normal') // MeshBasicMaterial doesn't need normals
@@ -37,16 +37,16 @@ export default function Ocean() {
           geom.deleteAttribute('color')
           geom.deleteAttribute('tangent')
           geom.morphAttributes = {}
-          
+
           const regularMesh = new THREE.Mesh(geom, newMaterial)
           regularMesh.name = node.name
-          
+
           // Copy world transform to avoid hierarchy issues if we flatten,
           // but here we just replace in place.
           regularMesh.position.copy(node.position)
           regularMesh.rotation.copy(node.rotation)
           regularMesh.scale.copy(node.scale)
-          
+
           meshesToReplace.push({ old: node, new: regularMesh })
         } else {
           // Desktop: keep standard but darken
@@ -78,7 +78,8 @@ export default function Ocean() {
     if (isMobile) return
     const firstAction = Object.values(actions)[0]
     if (firstAction) {
-      firstAction.play()
+      firstAction.reset()
+        .play()
     }
   }, [actions, isMobile])
 

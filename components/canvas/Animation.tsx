@@ -41,7 +41,7 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
 
     if (p < 0.08) {
       // Hero: Center
-      targetX = 0
+      targetX = 0.3
       targetRx = 0
     } else if (p < 0.6) {
       // Section 1 & 2: Left (Adjusted for Mobile)
