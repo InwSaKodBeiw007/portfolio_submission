@@ -110,7 +110,7 @@ export default function Home() {
               <span className="text-accent">my web portfolio</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-4xl lg:text-6xl font-medium tracking-tight text-[#a0a8b8] max-w-xl hover:text-gray-300 transition-colors cursor-default md:whitespace-nowrap">
-              Software Engineer & Creative Developer
+              Software Engineer & Game Developer
             </p>
             <div className="pt-4">
               <button 
@@ -227,7 +227,7 @@ export default function Home() {
 
             <div className="w-full flex flex-col">
               <AccordionItem 
-                title="React / Next.js" 
+                title="Web Frameworks & CMS" 
                 label="WEBSITE DEVELOPMENT" 
                 isOpen={openAccordion === 0} 
                 onClick={() => setOpenAccordion(openAccordion === 0 ? null : 0)}
@@ -237,8 +237,12 @@ export default function Home() {
                 <div>Python / Node.js</div>
                 <div>Auth (JWT, OAuth)</div>
                 <div>Databases (SQL, NoSQL)</div>
+                <div>SQLite, MongoDB, Firebase</div>
+                <div>Prisma</div>
+                <div>WordPress Design & Customization</div>
                 <div className="pt-3 flex flex-col gap-2">
                   <a href="https://github.com/InwSaKodBeiw007/Ecommerce-Website-Nextjs" target="_blank" rel="noopener noreferrer" className="inline-block border border-white/20 rounded-full px-3 py-1 text-xs text-white hover:bg-white/10 w-fit">GitHub: Ecommerce Project ↗</a>
+                  <a href="https://narakpainai.wordpress.com/about/" target="_blank" rel="noopener noreferrer" className="inline-block border border-white/20 rounded-full px-3 py-1 text-xs text-white hover:bg-white/10 w-fit">WordPress: About what my Dream is ↗</a>
                 </div>
               </AccordionItem>
 

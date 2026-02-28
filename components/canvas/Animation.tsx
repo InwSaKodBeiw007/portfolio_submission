@@ -50,11 +50,11 @@ export default function Animation({ modelRef, isTechStackVisible }: AnimationPro
       let targetX = 0
       let targetRy = 0
       let targetRx = 0
-      const sideX = 5.85
+      const sideX = 4.5
 
       if (p < 0.12) {
         // Hero: Mascot Left, Content Right.
-        targetX = -4.5
+        targetX = -sideX
         targetRy = 0 
         targetRx = 0
       } else if (p < 0.45) {
