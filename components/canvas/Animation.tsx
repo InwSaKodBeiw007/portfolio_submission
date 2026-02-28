@@ -22,31 +22,38 @@ export default function Animation({ modelRef, isTechStackVisible }: AnimationPro
 
     const t = state.clock.getElapsedTime()
     const isMobile = size.width < 768
+    const p = scrollProgress.current  // 0 = top, 1 = bottom
 
-    // 1. Idle "Breathing"
-    const breathingX = Math.sin(t / 4) / 30
-    const breathingZ = Math.cos(t / 4) / 30
-
-    // 2. Position & Rotation Logic
-    const p = scrollProgress.current
 
     if (isMobile) {
-      // On mobile: slow left-right sine drift
-      const driftX = Math.sin(t * 0.4) * 2.2
-      
-      // Keep model in lower portion of screen (below text)
-      const targetY = 0
 
-      modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, driftX, 0.03)
-      modelRef.current.position.y = MathUtils.lerp(modelRef.current.position.y, targetY, 0.05)
-      modelRef.current.position.z = 1.5 // closer to camera, above background
-      
-      // Gentle idle rotation
+      // ── Consistent Centered Y target ──
+      const targetY = 1.2
+
+      // ── Left↔Right drift within the landing zone ──
+      const driftX = Math.sin(t * 0.35) * 1.8
+
+      // ── Tilt/Lean: rotate on Z axis toward direction of travel ──
+      const driftVelocity = Math.cos(t * 0.35) * 0.35 * 1.8
+      const leanZ = -driftVelocity * 0.25
+
+      // ── Apply with smooth lerp ──
+      modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, driftX, 0.025)
+      modelRef.current.position.y = MathUtils.lerp(modelRef.current.position.y, targetY, 0.04)
+      modelRef.current.position.z = 2.0
+
+      // Gentle continuous Y rotation
       modelRef.current.rotation.y += state.clock.getDelta() * 0.3
-      modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, -0.1, 0.05)
-      modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, Math.sin(t * 0.3) * 0.05, 0.05)
+
+      // Lean on Z follows drift direction
+      modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, leanZ, 0.06)
+
+      // Slight upward tilt
+      modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, -0.1, 0.04)
     } else {
       // Desktop logic
+      const breathingX = Math.sin(t / 4) / 30
+      const breathingZ = Math.cos(t / 4) / 30
       let targetX = 0
       let targetRy = 0
       let targetRx = 0
@@ -55,7 +62,7 @@ export default function Animation({ modelRef, isTechStackVisible }: AnimationPro
       if (p < 0.12) {
         // Hero: Mascot Left, Content Right.
         targetX = -sideX
-        targetRy = 0 
+        targetRy = 0
         targetRx = 0
       } else if (p < 0.45) {
         // Projects: Model Left
@@ -65,7 +72,7 @@ export default function Animation({ modelRef, isTechStackVisible }: AnimationPro
       } else if (p < 0.8) {
         // About & Skills: Model Right. SHOW BACK.
         targetX = sideX
-        targetRy = Math.PI 
+        targetRy = Math.PI
         targetRx = -Math.PI / 18
       } else {
         // Contact: Model Left
@@ -142,7 +149,7 @@ export default function Animation({ modelRef, isTechStackVisible }: AnimationPro
 
       if (modelRef.current) {
         const currentY = modelRef.current.rotation.y
-        const targetY = 0 
+        const targetY = 0
         const diffY = (targetY - currentY + Math.PI) % (Math.PI * 2) - Math.PI
         const finalY = currentY + diffY
 

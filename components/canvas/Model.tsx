@@ -3,7 +3,7 @@
 import React, { forwardRef, useEffect, useMemo } from 'react'
 import { useGLTF, Center, useAnimations, Float, Resize } from '@react-three/drei'
 import { useThree, useFrame } from '@react-three/fiber'
-import { Group, LoopOnce, MathUtils } from 'three'
+import { Group, LoopOnce, MathUtils, Object3D, Mesh, Material } from 'three'
 
 /**
  * Props for the Model component.
@@ -22,11 +22,11 @@ export const Model = forwardRef<Group, ModelGroupProps>(({ isAnimating, isSkills
   const { actions } = useAnimations(animations, scene)
   const { size } = useThree()
 
-  const modelScale: number = useMemo(() => {
+  const modelScale = useMemo(() => {
     const isMobile = size.width < 768
-    // Reduced mobile scale as per prompt
-    return isMobile ? 2.5 : 5.85
-  }, [size.width])
+    // User's preferred scale values
+    return isMobile ? [7, 6, 6.5] : [6, 6, 5.5]
+  }, [size.width]) as [number, number, number]
 
   useEffect(() => {
     if (isAnimating && actions && animations.length > 0) {
@@ -54,11 +54,11 @@ export const Model = forwardRef<Group, ModelGroupProps>(({ isAnimating, isSkills
   useFrame(() => {
     if (!scene) return;
     const targetOpacity = isSkillsInView ? 0 : 1;
-    scene.traverse((child: any) => {
-      if (child.isMesh && child.material) {
+    scene.traverse((child: Object3D) => {
+      if (child instanceof Mesh) {
         // Handle materials array or single material
         const materials = Array.isArray(child.material) ? child.material : [child.material];
-        materials.forEach((mat: any) => {
+        materials.forEach((mat: Material) => {
           mat.transparent = true;
           mat.opacity = MathUtils.lerp(mat.opacity ?? 1, targetOpacity, 0.1);
         });
