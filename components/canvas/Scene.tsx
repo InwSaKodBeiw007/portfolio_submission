@@ -46,7 +46,7 @@ const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, hand
   return (
     <>
       <CameraConfig />
-      <Suspense fallback={<Html center><div className="text-white text-2xl font-bold animate-pulse">The artifact is loading...</div></Html>}>
+      <Suspense fallback={<Html position={[0, 8.95, 0]} center><div className="text-white text-2xl font-bold animate-pulse">The artifact is loading...</div></Html>}>
         <ambientLight intensity={isMobile ? 1 : 2} />
         {!isMobile && (
           <pointLight position={[-10, -10, -10]} intensity={1} color={currentTheme.lightColor} />
