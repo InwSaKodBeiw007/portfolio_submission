@@ -14,6 +14,7 @@ interface SceneProps {
   isTechStackVisible: boolean;
   currentTheme: { background: string; lightColor: string };
   setCurrentTheme: React.Dispatch<React.SetStateAction<{ background: string; lightColor: string }>>;
+  isSkillsInView?: boolean;
 }
 
 const CameraConfig = () => {
@@ -34,9 +35,10 @@ interface SceneContentProps {
   techGlowLightRef: React.RefObject<THREE.PointLight | null>;
   handleTechHover: (pos: THREE.Vector3 | null, color: string | null) => void;
   handleTechClick: (tech: string) => void;
+  isSkillsInView?: boolean;
 }
 
-const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, handleTechHover, handleTechClick }: SceneContentProps) => {
+const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, handleTechHover, handleTechClick, isSkillsInView }: SceneContentProps) => {
   const { size } = useThree()
   const modelRef = useRef<Group>(null)
   const isMobile = size.width < 768
@@ -60,7 +62,7 @@ const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, hand
           polar={[-Math.PI / 3, Math.PI / 3]}
           azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
         >
-          <Model ref={modelRef} isAnimating={isTechStackVisible} />
+          <Model ref={modelRef} isAnimating={isTechStackVisible} isSkillsInView={isSkillsInView} />
         </PresentationControls>
         {isTechStackVisible && (
           <Suspense fallback={null}>
@@ -77,7 +79,7 @@ const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, hand
   )
 }
 
-export default function Scene({ isTechStackVisible, currentTheme, setCurrentTheme }: SceneProps): React.ReactElement {
+export default function Scene({ isTechStackVisible, currentTheme, setCurrentTheme, isSkillsInView }: SceneProps): React.ReactElement {
   const [mounted, setMounted] = useState(false)
   const techGlowLightRef = useRef<THREE.PointLight>(null)
 
@@ -151,6 +153,7 @@ export default function Scene({ isTechStackVisible, currentTheme, setCurrentThem
           techGlowLightRef={techGlowLightRef}
           handleTechHover={handleTechHover}
           handleTechClick={handleTechClick}
+          isSkillsInView={isSkillsInView}
         />
       )}
     </Canvas>

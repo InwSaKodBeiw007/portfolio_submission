@@ -27,58 +27,74 @@ export default function Animation({ modelRef, isTechStackVisible }: AnimationPro
     const breathingX = Math.sin(t / 4) / 30
     const breathingZ = Math.cos(t / 4) / 30
 
-    // 2. Horizontal and Rotation Mapping based on scrollProgress
+    // 2. Position & Rotation Logic
     const p = scrollProgress.current
-    let targetX = 0
-    let targetRy = 0
-    let targetRx = 0
 
-    // Refined side positions - centered more on mobile
-    const sideX = isMobile ? 1.5 : 5.85
+    if (isMobile) {
+      // On mobile: slow left-right sine drift
+      const driftX = Math.sin(t * 0.4) * 2.2
+      
+      // Keep model in lower portion of screen (below text)
+      const targetY = 0
 
-    if (p < 0.12) {
-      // Hero: Mascot Left (PC), Content Right.
-      targetX = isMobile ? 0 : -4.5
-      targetRy = 0 
-      targetRx = 0
-    } else if (p < 0.45) {
-      // Projects: Model Left
-      targetX = -sideX
-      targetRy = Math.PI / 8
-      targetRx = -Math.PI / 15
-    } else if (p < 0.8) {
-      // About & Skills: Model Right. SHOW BACK.
-      targetX = sideX
-      targetRy = Math.PI 
-      targetRx = -Math.PI / 18
+      modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, driftX, 0.03)
+      modelRef.current.position.y = MathUtils.lerp(modelRef.current.position.y, targetY, 0.05)
+      modelRef.current.position.z = 1.5 // closer to camera, above background
+      
+      // Gentle idle rotation
+      modelRef.current.rotation.y += state.clock.getDelta() * 0.3
+      modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, -0.1, 0.05)
+      modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, Math.sin(t * 0.3) * 0.05, 0.05)
     } else {
-      // Contact: Model Left
-      targetX = -sideX
-      targetRy = 0
-      targetRx = 0
+      // Desktop logic
+      let targetX = 0
+      let targetRy = 0
+      let targetRx = 0
+      const sideX = 5.85
+
+      if (p < 0.12) {
+        // Hero: Mascot Left, Content Right.
+        targetX = -4.5
+        targetRy = 0 
+        targetRx = 0
+      } else if (p < 0.45) {
+        // Projects: Model Left
+        targetX = -sideX
+        targetRy = Math.PI / 8
+        targetRx = -Math.PI / 15
+      } else if (p < 0.8) {
+        // About & Skills: Model Right. SHOW BACK.
+        targetX = sideX
+        targetRy = Math.PI 
+        targetRx = -Math.PI / 18
+      } else {
+        // Contact: Model Left
+        targetX = -sideX
+        targetRy = 0
+        targetRx = 0
+      }
+
+      modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, targetX, 0.05)
+
+      // Perspective-Correct Tilt (เอียงฐาน)
+      const tiltFactor = MathUtils.smoothstep(p, 0.12, 0.25)
+      const tiltStrength = 0.4
+      const currentX = modelRef.current.position.x
+      const sideProgress = currentX / sideX
+      const targetRz = sideProgress * tiltStrength * Math.cos(targetRy) * tiltFactor
+
+      // Rotation: Smoothly lerp to target orientation
+      const subtleSpin = Math.sin(t / 8) * 0.1
+      modelRef.current.rotation.y = MathUtils.lerp(modelRef.current.rotation.y, targetRy + subtleSpin, 0.05)
+
+      // Position constraints - Fixed Height
+      modelRef.current.position.y = 5.25
+      modelRef.current.position.z = 0.95
+
+      // Apply Rotation X & Z (Target + Breathing)
+      modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, targetRx + breathingX, 0.05)
+      modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, targetRz + breathingZ, 0.05)
     }
-
-    // Horizontal Movement lerp
-    modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, targetX, 0.05)
-
-    // 3. Perspective-Correct Tilt (เอียงฐาน)
-    const tiltFactor = MathUtils.smoothstep(p, 0.12, 0.25)
-    const tiltStrength = 0.4
-    const currentX = modelRef.current.position.x
-    const sideProgress = currentX / (isMobile ? 1.5 : 5.85)
-    const targetRz = sideProgress * tiltStrength * Math.cos(targetRy) * tiltFactor
-
-    // 4. Rotation: Smoothly lerp to target orientation
-    const subtleSpin = Math.sin(t / 8) * 0.1
-    modelRef.current.rotation.y = MathUtils.lerp(modelRef.current.rotation.y, targetRy + subtleSpin, 0.05)
-
-    // 5. Position constraints - Fixed Height
-    modelRef.current.position.z = 0.95
-    modelRef.current.position.y = isMobile ? 4.5 : 5.25
-
-    // Apply Rotation X & Z (Target + Breathing)
-    modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, targetRx + breathingX, 0.05)
-    modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, targetRz + breathingZ, 0.05)
   })
 
   useEffect(() => {
