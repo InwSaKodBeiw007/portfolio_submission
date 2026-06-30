@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { Group, Vector3 } from 'three'
 import TechIcon3D from '../canvas/TechIcon3D'
 import { useGLTF } from '@react-three/drei'
+import { useThree } from '@react-three/fiber'
 
 interface TechStackProps {
   isVisible: boolean;
@@ -20,7 +21,7 @@ technologies.forEach(tech => {
   let fileName = tech
   if (tech === 'Python') fileName = 'python'
   if (tech === 'Roblox Studio') fileName = 'Roblox_studio'
-  useGLTF.preload(`/${encodeURIComponent(fileName)}.glb`)
+  useGLTF.preload(`/3D_Models/${encodeURIComponent(fileName)}.glb`)
 })
 
 const techColors: Record<string, string> = {
@@ -39,16 +40,17 @@ const techColors: Record<string, string> = {
 export default function TechStack({ isVisible, onTechClick, onTechHover }: TechStackProps) {
   const [delayedVisible, setDelayedVisible] = useState(false)
   const groupRef = useRef<Group>(null)
+  const { size } = useThree()
+  const isMobile = size.width < 768
 
-  // Spawn delay logic to wait for paintbrush animation and camera transition
+  // Spawn delay logic
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
     if (isVisible) {
       timer = setTimeout(() => {
         setDelayedVisible(true)
-      }, 2000) // Reduced delay for better responsiveness
+      }, 2000) // Increased delay for a more deliberate transition
     } else {
-      // Use a timeout of 0 to move it to the next event loop tick and avoid sync render warning
       const clearTimer = setTimeout(() => {
         setDelayedVisible(false)
       }, 0)
@@ -60,7 +62,8 @@ export default function TechStack({ isVisible, onTechClick, onTechHover }: TechS
   }, [isVisible])
 
   return (
-    <group ref={groupRef} position={[0, 3, -10]}>
+    // Master's request: Elevate icons on mobile (y: 5), keep standard on PC (y: 3)
+    <group ref={groupRef} position={[0, isMobile ? 5 : 3, -10]}>
       {technologies.map((tech, i) => (
         <TechIcon3D
           key={tech}

@@ -26,7 +26,7 @@ export default function TechIcon3D({ name, index, totalCount, color, isVisible, 
     let fileName = name
     if (name === 'Python') fileName = 'python'
     if (name === 'Roblox Studio') fileName = 'Roblox_studio'
-    return `/${encodeURIComponent(fileName)}.glb`
+    return `/3D_Models/${encodeURIComponent(fileName)}.glb`
   }, [name])
 
   const { scene } = useGLTF(modelPath)

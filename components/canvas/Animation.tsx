@@ -3,23 +3,17 @@
 import { useEffect, useRef } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Group, MathUtils } from 'three'
-
-gsap.registerPlugin(ScrollTrigger)
 
 interface AnimationProps {
   modelRef: React.MutableRefObject<Group | null>;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
   isTechStackVisible: boolean;
 }
 
-export default function Animation({ modelRef, scrollRef, isTechStackVisible }: AnimationProps) {
+export default function Animation({ modelRef, isTechStackVisible }: AnimationProps) {
   const { camera, size } = useThree()
   const tlCamera = useRef<gsap.core.Timeline | null>(null)
   const isTransitioning = useRef(false)
-
-  // Use useFrame for smooth lerping to target positions based on scroll
   const scrollProgress = useRef(0)
 
   // Idle Animation and Scroll Follower
@@ -28,68 +22,100 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
 
     const t = state.clock.getElapsedTime()
     const isMobile = size.width < 768
+    const p = scrollProgress.current  // 0 = top, 1 = bottom
 
-    // 1. Idle "Breathing" (Sine wave without the large offset)
-    const breathingX = Math.sin(t / 4) / 20
-    const breathingZ = Math.cos(t / 4) / 20
 
-    // 2. Horizontal Position Mapping based on scrollProgress
-    // We map the 0-1 progress to our 5 sections
-    const p = scrollProgress.current
-    let targetX = 0
-    let targetRx = 0
+    if (isMobile) {
 
-    if (p < 0.08) {
-      // Hero: Center
-      targetX = 0
-      targetRx = 0
-    } else if (p < 0.6) {
-      // Section 1 & 2: Left (Adjusted for Mobile)
-      targetX = isMobile ? -2.5 : -6.65
-      targetRx = -Math.PI / 12 // Tilt up
-    } else if (p < 0.9) {
-      // Section 3: Right (Adjusted for Mobile)
-      targetX = isMobile ? 2.5 : 6.5
-      targetRx = -Math.PI / 12 // Tilt up
+      // ── Consistent Centered Y target ──
+      const targetY = 1.2
+
+      // ── Left↔Right drift within the landing zone ──
+      const driftX = Math.sin(t * 0.35) * 1.8
+
+      // ── Tilt/Lean: rotate on Z axis toward direction of travel ──
+      const driftVelocity = Math.cos(t * 0.35) * 0.35 * 1.8
+      const leanZ = -driftVelocity * 0.25
+
+      // ── Apply with smooth lerp ──
+      modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, driftX, 0.025)
+      modelRef.current.position.y = MathUtils.lerp(modelRef.current.position.y, targetY, 0.04)
+      modelRef.current.position.z = 2.0
+
+      // Gentle continuous Y rotation
+      modelRef.current.rotation.y += state.clock.getDelta() * 0.3
+
+      // Lean on Z follows drift direction
+      modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, leanZ, 0.06)
+
+      // Slight upward tilt
+      modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, -0.1, 0.04)
     } else {
-      // Section 4: Center
-      targetX = 0
-      targetRx = 0
+      // Desktop logic
+      const breathingX = Math.sin(t / 4) / 30
+      const breathingZ = Math.cos(t / 4) / 30
+      let targetX = 0
+      let targetRy = 0
+      let targetRx = 0
+      const sideX = 4.5
+
+      if (p < 0.12) {
+        // Hero: Mascot Left, Content Right.
+        targetX = -sideX
+        targetRy = 0
+        targetRx = 0
+      } else if (p < 0.45) {
+        // Projects: Model Left
+        targetX = -sideX
+        targetRy = Math.PI / 8
+        targetRx = -Math.PI / 15
+      } else if (p < 0.8) {
+        // About & Skills: Model Right. SHOW BACK.
+        targetX = sideX
+        targetRy = Math.PI
+        targetRx = -Math.PI / 18
+      } else {
+        // Contact: Model Left
+        targetX = -sideX
+        targetRy = 0
+        targetRx = 0
+      }
+
+      modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, targetX, 0.05)
+
+      // Perspective-Correct Tilt (เอียงฐาน)
+      const tiltFactor = MathUtils.smoothstep(p, 0.12, 0.25)
+      const tiltStrength = 0.4
+      const currentX = modelRef.current.position.x
+      const sideProgress = currentX / sideX
+      const targetRz = sideProgress * tiltStrength * Math.cos(targetRy) * tiltFactor
+
+      // Rotation: Smoothly lerp to target orientation
+      const subtleSpin = Math.sin(t / 8) * 0.1
+      modelRef.current.rotation.y = MathUtils.lerp(modelRef.current.rotation.y, targetRy + subtleSpin, 0.05)
+
+      // Position constraints - Fixed Height
+      modelRef.current.position.y = 5.25
+      modelRef.current.position.z = 0.95
+
+      // Apply Rotation X & Z (Target + Breathing)
+      modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, targetRx + breathingX, 0.05)
+      modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, targetRz + breathingZ, 0.05)
     }
-
-    // Smoothly lerp to target X
-    modelRef.current.position.x = MathUtils.lerp(modelRef.current.position.x, targetX, 0.05)
-
-    // 3. Rotation: Continuous Spin mapped to scroll
-    modelRef.current.rotation.y = MathUtils.lerp(modelRef.current.rotation.y, p * Math.PI * 1, 0.05)
-
-    // 4. Lock Z and Y (to prevent zoom/bounce)
-    modelRef.current.position.z = 0.95
-    modelRef.current.position.y = isMobile ? 4.0 : 1
-
-    // Apply Rotation X (Target + Breathing)
-    modelRef.current.rotation.x = MathUtils.lerp(modelRef.current.rotation.x, targetRx + breathingX, 0.05)
-    modelRef.current.rotation.z = MathUtils.lerp(modelRef.current.rotation.z, breathingZ, 0.05)
   })
 
   useEffect(() => {
-    if (!scrollRef.current) return
-
-    // Create the ScrollTrigger to capture the progress
-    const st = ScrollTrigger.create({
-      trigger: scrollRef.current,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 2, // Increased from 1.5 for a slower, more premium feel
-      onUpdate: (self) => {
-        scrollProgress.current = self.progress
-      },
-    })
-
-    return () => {
-      st.kill()
+    const handleScroll = () => {
+      const winScroll = window.pageYOffset
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight
+      const scrolled = height > 0 ? winScroll / height : 0
+      scrollProgress.current = scrolled
     }
-  }, [scrollRef])
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll() // Initial progress
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Tech Stack View Camera Animation
   useEffect(() => {
@@ -106,42 +132,40 @@ export default function Animation({ modelRef, scrollRef, isTechStackVisible }: A
 
       const isMobile = size.width < 768
 
-      // Animate Camera to a 90-degree side view and zoom in
       tlCamera.current.to(camera.position, {
-        x: 0.25, // Side view
-        y: 5,
-        z: 0, // Zoomed in
-        duration: 1,
+        x: 0,
+        y: 4.75,
+        z: 0,
+        duration: 1.2,
         ease: 'power3.inOut',
       }, 0)
         .to(camera.rotation, {
           x: 0,
-          y: 0, // 90-degree rotation
+          y: 0,
           z: 0,
-          duration: 1,
+          duration: 1.2,
           ease: 'power3.inOut',
         }, 0)
 
-      // Animate Model to center
       if (modelRef.current) {
-        // Shortest path rotation formula
         const currentY = modelRef.current.rotation.y
-        const targetY = 5.4
+        const targetY = 0
         const diffY = (targetY - currentY + Math.PI) % (Math.PI * 2) - Math.PI
         const finalY = currentY + diffY
 
+        // Master's specific request: Mascot at Y: 3 on mobile during Tech Stack
         tlCamera.current.to(modelRef.current.position, {
-          x: isMobile ? 0.5 : 1,
-          y: isMobile ? 1.5 : -2, // Move even higher on mobile
-          z: isMobile ? -8.5 : -2, // Move backward on mobile (further from camera)
-          duration: 1,
+          x: 0,
+          y: isMobile ? 3 : 2,
+          z: isMobile ? -8 : -5,
+          duration: 1.2,
           ease: 'power3.inOut',
         }, 0)
           .to(modelRef.current.rotation, {
-            x: -Math.PI / 24, // Tilt up slightly
+            x: -Math.PI / 12,
             y: finalY,
-            z: 0.22,
-            duration: 1,
+            z: 0,
+            duration: 1.2,
             ease: 'power3.inOut',
           }, 0)
       }

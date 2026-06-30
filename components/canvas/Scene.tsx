@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense, RefObject, useRef, useCallback, useState, useEffect } from 'react'
+import React, { Suspense, useRef, useCallback, useState, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Environment, Html, PresentationControls, PerspectiveCamera } from '@react-three/drei'
 import { Model } from './Model'
@@ -11,10 +11,10 @@ import * as THREE from 'three'
 import { Group } from 'three'
 
 interface SceneProps {
-  scrollRef: RefObject<HTMLDivElement | null>;
   isTechStackVisible: boolean;
   currentTheme: { background: string; lightColor: string };
   setCurrentTheme: React.Dispatch<React.SetStateAction<{ background: string; lightColor: string }>>;
+  isSkillsInView?: boolean;
 }
 
 const CameraConfig = () => {
@@ -29,7 +29,16 @@ const CameraConfig = () => {
   );
 };
 
-const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme, techGlowLightRef, handleTechHover, handleTechClick }: any) => {
+interface SceneContentProps {
+  isTechStackVisible: boolean;
+  currentTheme: { background: string; lightColor: string };
+  techGlowLightRef: React.RefObject<THREE.PointLight | null>;
+  handleTechHover: (pos: THREE.Vector3 | null, color: string | null) => void;
+  handleTechClick: (tech: string) => void;
+  isSkillsInView?: boolean;
+}
+
+const SceneContent = ({ isTechStackVisible, currentTheme, techGlowLightRef, handleTechHover, handleTechClick, isSkillsInView }: SceneContentProps) => {
   const { size } = useThree()
   const modelRef = useRef<Group>(null)
   const isMobile = size.width < 768
@@ -37,7 +46,7 @@ const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentT
   return (
     <>
       <CameraConfig />
-      <Suspense fallback={<Html center><div className="text-white text-2xl font-bold animate-pulse">The artifact is loading...</div></Html>}>
+      <Suspense fallback={<Html position={[0, 8.95, 0]} center><div className="text-white text-2xl font-bold animate-pulse">The artifact is loading...</div></Html>}>
         <ambientLight intensity={isMobile ? 1 : 2} />
         {!isMobile && (
           <pointLight position={[-10, -10, -10]} intensity={1} color={currentTheme.lightColor} />
@@ -53,7 +62,7 @@ const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentT
           polar={[-Math.PI / 3, Math.PI / 3]}
           azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
         >
-          <Model ref={modelRef} isAnimating={isTechStackVisible} />
+          <Model ref={modelRef} isAnimating={isTechStackVisible} isSkillsInView={isSkillsInView} />
         </PresentationControls>
         {isTechStackVisible && (
           <Suspense fallback={null}>
@@ -65,16 +74,17 @@ const SceneContent = ({ scrollRef, isTechStackVisible, currentTheme, setCurrentT
           </Suspense>
         )}
       </Suspense>
-      <Animation modelRef={modelRef} scrollRef={scrollRef} isTechStackVisible={isTechStackVisible} />
+      <Animation modelRef={modelRef} isTechStackVisible={isTechStackVisible} />
     </>
   )
 }
 
-export default function Scene({ scrollRef, isTechStackVisible, currentTheme, setCurrentTheme }: SceneProps): React.ReactElement {
+export default function Scene({ isTechStackVisible, currentTheme, setCurrentTheme, isSkillsInView }: SceneProps): React.ReactElement {
   const [mounted, setMounted] = useState(false)
   const techGlowLightRef = useRef<THREE.PointLight>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -91,8 +101,6 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
   }, [])
 
   const handleTechClick = useCallback((tech: string) => {
-    // ... Switch logic remains the same
-    console.log(`My Master clicked on: ${tech}`)
     let newTheme = { ...currentTheme };
     switch (tech) {
       case 'TypeScript':
@@ -126,7 +134,7 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
         newTheme = { background: '#00A2FF', lightColor: '#FFFFFF' };
         break;
       default:
-        newTheme = { background: '#000000', lightColor: '#FFFFFF' };
+        newTheme = { background: '#050508', lightColor: '#FFFFFF' };
         break;
     }
     setCurrentTheme(newTheme);
@@ -135,26 +143,19 @@ export default function Scene({ scrollRef, isTechStackVisible, currentTheme, set
   return (
     <Canvas
       style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -1, background: currentTheme.background }}
-      eventSource={mounted ? document.body : undefined}
+      eventSource={mounted ? (typeof document !== 'undefined' ? document.body : undefined) : undefined}
       eventPrefix="client"
     >
       {mounted && (
         <SceneContent 
-          scrollRef={scrollRef}
           isTechStackVisible={isTechStackVisible}
           currentTheme={currentTheme}
-          setCurrentTheme={setCurrentTheme}
           techGlowLightRef={techGlowLightRef}
           handleTechHover={handleTechHover}
           handleTechClick={handleTechClick}
+          isSkillsInView={isSkillsInView}
         />
       )}
     </Canvas>
   )
 }
-
-
-
-
-
-
