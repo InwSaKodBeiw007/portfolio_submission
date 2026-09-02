@@ -189,8 +189,7 @@ This project is open source. Use it as a template for your own portfolio!
 
 *"I love the immense soul and atmosphere the developers breathed into Skyrim. My goal is to craft immersive, living experiences that resonate with that same creative fire."*
 
-🔗 **Links:**
-- [GitHub Profile](https://github.com/InwSaKodBeiw007)
+ **Links:**
 - [Portfolio Live](https://gameportfoliosite.vercel.app/)
 - Thailand 🇹🇭
 
